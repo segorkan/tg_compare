@@ -12,8 +12,9 @@ from config import BOT_TOKEN
 from const import *
 
 
-async def get_wiki(name):
-    return await wikipedia.page("Austria")
+class WrongPageException(Exception):
+    "Raised when API has found a country because of translator addition but a page cannot be found in Wikipedia"
+    pass
 
 
 async def pre_find(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -24,17 +25,55 @@ async def pre_find(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message.text.lower().capitalize()
-    res = ts.translate_text(message, from_language="ru", to_language="en")
-    response = await get_response_json(base_country1 + res, params={})
-    if not response:
+    res_eng = ts.translate_text(message, from_language="ru", to_language="en")
+    res_rus = ts.translate_text(message, from_language="en", to_language="ru")
+    context.user_data["last_country"] = res_eng
+    response = await get_response_json(base_country1 + res_eng, params={})
+    if len(response) > 1:
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Такая страна не найдена. Попробуйте ещё раз.")
         return "find"
     else:
-        flag_url = response[0]["flags"]["png"]
-        # wiki_response = await get_wiki(res)
+        try:
+            flag_url = response[0]["flags"]["png"]
+        except KeyError:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text="Такая страна не найдена. Попробуйте ещё раз.")
+            return "find"
+        wiki_wiki = wikipediaapi.Wikipedia(
+            user_agent='TgCompareBot (test@example.com)',
+            language='ru',
+            extract_format=wikipediaapi.ExtractFormat.WIKI
+        )
+        wiki_response = str(wiki_wiki.page(res_rus).summary)
+        print(wiki_response)
+        try:
+            check = False
+            accept = ["государство", "страна", "регион", "автономия"]
+            for i in accept:
+                if i in wiki_response:
+                    check = True
+            if not check:
+                raise WrongPageException
+        except WrongPageException:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text="Такая страна не найдена. Попробуйте ещё раз.")
+            return "find"
+        wiki_text = ". ".join(wiki_response.split('. ')[:7]) + '.'
         await context.bot.send_photo(chat_id=update.effective_chat.id, photo=flag_url, caption=message)
-        return "find"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=wiki_text)
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="/find - новый поиск, /add_info - добавить в info_list, /add_compare - добавить в compare_list, "
+                                            "/back - обратно в меню")
+        return "rfind"
+
+
+async def add_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    pass
+
+
+async def add_compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    pass
 
 
 async def get_response_json(url, params):

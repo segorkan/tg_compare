@@ -2,7 +2,7 @@ import logging
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, ContextTypes, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Bot, KeyboardButton, Update, InputMediaPhoto
 from config import BOT_TOKEN
-from find import pre_find, find
+from find import pre_find, find, add_info, add_compare
 import time
 
 logging.basicConfig(
@@ -45,7 +45,9 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             "menu": [CommandHandler('help', help), CommandHandler('find', pre_find)],
-            "find": [MessageHandler(filters.TEXT & ~filters.COMMAND, find)]
+            "find": [MessageHandler(filters.TEXT & ~filters.COMMAND, find), CommandHandler('back', back)],
+            "rfind": [CommandHandler('find', pre_find), CommandHandler('add_info', add_info),
+                      CommandHandler('add_compare', add_compare), CommandHandler('back', back)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
