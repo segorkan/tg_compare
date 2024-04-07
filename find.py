@@ -23,10 +23,40 @@ async def pre_find(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return "find"
 
 
+def capitalize_string(name):
+    temp = []
+    for i in name.split():
+        if len(i) > 1:
+            temp.append(i.capitalize())
+        else:
+            temp.append(i)
+
+    return " ".join(temp)
+
+
+async def with_threads(res_rus):
+    wiki_request = "1"
+
+    def make_request():
+        global wiki_request
+        wiki_wiki = wikipediaapi.Wikipedia(
+            user_agent='TgCompareBot (test@example.com)',
+            language='ru',
+            extract_format=wikipediaapi.ExtractFormat.WIKI
+        )
+        wiki_request = str(wiki_wiki.page(res_rus).summary)
+        print("IN ASYNC FUNCTION " + wiki_request)
+
+    reqs = [asyncio.to_thread(make_request) for _ in range(1)]
+    await asyncio.gather(*reqs)
+    return wiki_request
+
+
 async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message.text.lower().capitalize()
     res_eng = ts.translate_text(message, from_language="ru", to_language="en")
     res_rus = ts.translate_text(message, from_language="en", to_language="ru")
+    res_rus = capitalize_string(res_rus)
     context.user_data["last_country"] = res_eng
     response = await get_response_json(base_country1 + res_eng, params={})
     if len(response) > 1:
@@ -40,6 +70,7 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text="Такая страна не найдена. Попробуйте ещё раз.")
             return "find"
+        print(res_rus)
         wiki_wiki = wikipediaapi.Wikipedia(
             user_agent='TgCompareBot (test@example.com)',
             language='ru',
@@ -49,7 +80,7 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(wiki_response)
         try:
             check = False
-            accept = ["государство", "страна", "регион", "автономия"]
+            accept = ["государство", "страна", "регион", "автономия", "область", "район"]
             for i in accept:
                 if i in wiki_response:
                     check = True
@@ -59,21 +90,13 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text="Такая страна не найдена. Попробуйте ещё раз.")
             return "find"
-        wiki_text = ". ".join(wiki_response.split('. ')[:7]) + '.'
+        wiki_text = ". ".join(wiki_response.split(". ")[:MAX_SENTENCES]) + '.'
         await context.bot.send_photo(chat_id=update.effective_chat.id, photo=flag_url, caption=message)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=wiki_text)
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="/find - новый поиск, /add_info - добавить в info_list, /add_compare - добавить в compare_list, "
                                             "/back - обратно в меню")
         return "rfind"
-
-
-async def add_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    pass
-
-
-async def add_compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    pass
 
 
 async def get_response_json(url, params):

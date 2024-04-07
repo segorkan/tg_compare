@@ -1,9 +1,15 @@
 import logging
-from telegram.ext import Application, MessageHandler, filters, CommandHandler, ContextTypes, ConversationHandler
+from telegram.ext import Application, MessageHandler, filters, CommandHandler, ContextTypes, ConversationHandler, \
+    StringRegexHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Bot, KeyboardButton, Update, InputMediaPhoto
 from config import BOT_TOKEN
-from find import pre_find, find, add_info, add_compare
+from find import pre_find, find
+from db_manip import add_info, add_compare, compare_list, info_list, info_delete, comp_delete
 import time
+from data import db_session
+from data.info_list import InfoList
+from data.compare_list import CompareList
+from check import check, handleCheck, command_list
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -13,10 +19,25 @@ logger = logging.getLogger(__name__)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_photo(chat_id=update.effective_chat.id, photo=open("./images/all_countries.png", "rb"),
-                                 caption="Приветствуем вас! Этого бота можно использовать для быстрого получения краткой информации о странах, "
-                                         "просмотра интересующих деталей страны и сравнения характеристик стран между собой. "
-                                         "/help для получения информации об использовании.")
+    db_sess = db_session.create_session()
+    infoitem = db_sess.query(InfoList).filter(InfoList.id == update.effective_user.id).first()
+    comitem = db_sess.query(CompareList).filter(CompareList.id == update.effective_user.id).first()
+    if not infoitem:
+        infoitem = InfoList()
+        infoitem.id = update.effective_user.id
+        infoitem.countries = ""
+        db_sess.add(infoitem)
+        db_sess.commit()
+    if not comitem:
+        infoitem = CompareList()
+        infoitem.id = update.effective_user.id
+        infoitem.countries = ""
+        db_sess.add(infoitem)
+        db_sess.commit()
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Приветствуем вас! Этого бота можно использовать для быстрого получения краткой информации о странах, "
+                                        "просмотра интересующих деталей страны и сравнения характеристик стран между собой. "
+                                        "/help для получения информации об использовании.")
     return "menu"
 
 
@@ -39,19 +60,34 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
+async def secret(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_sticker(chat_id=update.effective_chat.id, sticker=open("./images/sticker.webp", "rb"))
+
+
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
+    db_session.global_init("db/blogs.db")
     global_conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            "menu": [CommandHandler('help', help), CommandHandler('find', pre_find)],
+            "menu": [CommandHandler('help', help), CommandHandler('find', pre_find),
+                     CommandHandler('info_list', info_list), CommandHandler('compare_list', compare_list)],
             "find": [MessageHandler(filters.TEXT & ~filters.COMMAND, find), CommandHandler('back', back)],
             "rfind": [CommandHandler('find', pre_find), CommandHandler('add_info', add_info),
-                      CommandHandler('add_compare', add_compare), CommandHandler('back', back)]
+                      CommandHandler('add_compare', add_compare), CommandHandler('back', back)],
+            "endfind": [CommandHandler('find', pre_find), CommandHandler('back', back)],
+            "info": [CommandHandler('back', back), CommandHandler('delete', info_delete),
+                     CommandHandler('info_list', info_list), CommandHandler('check', check)],
+            "check": [CommandHandler('back', back), MessageHandler(filters.TEXT & ~filters.COMMAND, handleCheck),
+                      CommandHandler('chlist', command_list)],
+            "compare": [CommandHandler('back', back), CommandHandler('delete', comp_delete),
+                        CommandHandler('compare_list', compare_list)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
+    test = CommandHandler('secret', secret)
     application.add_handler(global_conv_handler)
+    application.add_handler(test)
     application.run_polling()
 
 
