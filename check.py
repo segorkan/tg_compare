@@ -4,7 +4,6 @@ from telegram.ext import Application, MessageHandler, filters, CommandHandler, C
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Bot, KeyboardButton, Update, InputMediaPhoto
 from data import db_session
 from data.info_list import InfoList
-from data.compare_list import CompareList
 from const import *
 
 
