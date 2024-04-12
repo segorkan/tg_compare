@@ -51,5 +51,4 @@ async def scatter(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Неверное количество параметров.")
         return "compare"
     for i in context.args:
-
-
+        pass
