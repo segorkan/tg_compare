@@ -8,19 +8,22 @@ from data.compare_list import CompareList
 from data.save_info import SaveInfo
 from const import *
 import matplotlib.pyplot as plt
+import keyboards
 
 
 async def histplot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         stat = context.args[0]
     except IndexError:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Аргумент не передан.")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Аргумент не передан.",
+                                       reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
         return "compare"
     db_sess = db_session.create_session()
     query = db_sess.query(SaveInfo).first()
     stat_list = []
     if stat not in query.intinfo:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Статистика не найдена.")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Статистика не найдена.",
+                                       reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
         return "compare"
     query = db_sess.query(CompareList).filter(CompareList.id == update.effective_user.id).first()
     for i in query.countries.split(','):
@@ -42,7 +45,8 @@ async def histplot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     plt.savefig("./images/plot.png")
 
     await context.bot.send_photo(chat_id=update.effective_chat.id, photo=open("./images/plot.png", 'rb'),
-                                 caption=f"{stat}")
+                                 caption=f"{stat}",
+                                 reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
     return "compare"
 
 
@@ -52,4 +56,3 @@ async def scatter(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return "compare"
     for i in context.args:
         pass
-

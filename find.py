@@ -10,6 +10,7 @@ from telegram.ext import Application, MessageHandler, filters, CommandHandler, C
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Bot, KeyboardButton, Update, InputMediaPhoto
 from config import BOT_TOKEN
 from const import *
+import keyboards
 
 
 class WrongPageException(Exception):
@@ -19,7 +20,8 @@ class WrongPageException(Exception):
 
 async def pre_find(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Введите название страны на русском или английском языке, в любом регистре. /back для выхода в меню.")
+        "Введите название страны на русском или английском языке, в любом регистре. /back для выхода в меню.",
+        reply_markup=ReplyKeyboardMarkup(keyboards.find, one_time_keyboard=False))
     return "find"
 
 
@@ -61,14 +63,16 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response = await get_response_json(base_country1 + res_eng, params={})
     if len(response) > 1:
         await context.bot.send_message(chat_id=update.effective_chat.id,
-                                       text="Такая страна не найдена. Попробуйте ещё раз.")
+                                       text="Такая страна не найдена. Попробуйте ещё раз.",
+                                       reply_markup=ReplyKeyboardMarkup(keyboards.find, one_time_keyboard=False))
         return "find"
     else:
         try:
             flag_url = response[0]["flags"]["png"]
         except KeyError:
             await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text="Такая страна не найдена. Попробуйте ещё раз.")
+                                           text="Такая страна не найдена. Попробуйте ещё раз.",
+                                           reply_markup=ReplyKeyboardMarkup(keyboards.find, one_time_keyboard=False))
             return "find"
         print(res_rus)
         wiki_wiki = wikipediaapi.Wikipedia(
@@ -88,14 +92,16 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 raise WrongPageException
         except WrongPageException:
             await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text="Такая страна не найдена. Попробуйте ещё раз.")
+                                           text="Такая страна не найдена. Попробуйте ещё раз.",
+                                           reply_markup=ReplyKeyboardMarkup(keyboards.find, one_time_keyboard=False))
             return "find"
         wiki_text = ". ".join(wiki_response.split(". ")[:MAX_SENTENCES]) + '.'
         await context.bot.send_photo(chat_id=update.effective_chat.id, photo=flag_url, caption=message)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=wiki_text)
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="/find - новый поиск, /add_info - добавить в info_list, /add_compare - добавить в compare_list, "
-                                            "/back - обратно в меню")
+                                            "/back - обратно в меню",
+                                       reply_markup=ReplyKeyboardMarkup(keyboards.rfind, one_time_keyboard=False))
         return "rfind"
 
 

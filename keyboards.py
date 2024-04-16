@@ -1,0 +1,7 @@
+menu = [['/help', '/find', '/info_list', '/compare_list', '/back', '/stop']]
+find = [['/back']]
+rfind = [['/find', '/add_info', '/add_compare', '/back']]
+endfind = [['/find', '/back']]
+info = [['/back', '/delete', '/info_list', '/check']]
+check = [['/back', '/chlist']]
+compare = [['/back', '/delete', '/compare_list', '/chars', '/versus', '/histplot']]

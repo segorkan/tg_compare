@@ -9,6 +9,7 @@ from const import *
 from data.save_info import SaveInfo
 from config import API_KEY
 import translators as ts
+import keyboards
 
 
 def is_float(string):
@@ -48,19 +49,24 @@ async def chars(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         idx = int(context.args[0]) - 1
     except IndexError:
-        await update.message.reply_text("Не передан индекс.")
+        await update.message.reply_text("Не передан индекс.",
+                                        reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
         return "compare"
     except TypeError:
-        await update.message.reply_text("Нужен численный аргумент.")
+        await update.message.reply_text("Нужен численный аргумент.",
+                                        reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
         return "compare"
     except ValueError:
-        await update.message.reply_text("Нужен численный аргумент.")
+        await update.message.reply_text("Нужен численный аргумент.",
+                                        reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
         return "compare"
     if idx < 0 or idx >= len(country_list):
-        await update.message.reply_text("Передан несуществующий индекс.")
+        await update.message.reply_text("Передан несуществующий индекс.",
+                                        reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
         return "compare"
     if len(context.args) > 1:
-        await update.message.reply_text("Слишком много аргументов.")
+        await update.message.reply_text("Слишком много аргументов.",
+                                        reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
         return "compare"
     db_sess = db_session.create_session()
     saveitem = db_sess.query(SaveInfo).filter(SaveInfo.country == country_list[idx]).first()
@@ -70,7 +76,8 @@ async def chars(update: Update, context: ContextTypes.DEFAULT_TYPE):
         k, v = i.split('=')
         ans += k + " = " + v + '\n'
     await context.bot.send_message(chat_id=update.effective_chat.id, text=ans)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Возвращение в меню compare_list.")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Возвращение в меню compare_list.",
+                                   reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
     return "compare"
 
 
@@ -78,19 +85,26 @@ async def versus(update: Update, context: ContextTypes.DEFAULT_TYPE):
     country_list: list = context.user_data["clist"]
     new_list = []
     if len(context.args) == 0:
-        await update.message.reply_text("Не переданы аргументы.")
+        await update.message.reply_text("Не переданы аргументы.",
+                                        reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
         return "compare"
     for i in context.args:
         try:
             idx = int(i) - 1
         except TypeError:
-            await update.message.reply_text("Нужен численный аргумент.")
+            await update.message.reply_text("Нужен численный аргумент.",
+                                            reply_markup=ReplyKeyboardMarkup(keyboards.compare,
+                                                                             one_time_keyboard=False))
             return "compare"
         except ValueError:
-            await update.message.reply_text("Нужен численный аргумент.")
+            await update.message.reply_text("Нужен численный аргумент.",
+                                            reply_markup=ReplyKeyboardMarkup(keyboards.compare,
+                                                                             one_time_keyboard=False))
             return "compare"
         if idx < 0 or idx >= len(country_list):
-            await update.message.reply_text("Передан несуществующий индекс.")
+            await update.message.reply_text("Передан несуществующий индекс.",
+                                            reply_markup=ReplyKeyboardMarkup(keyboards.compare,
+                                                                             one_time_keyboard=False))
             return "compare"
         new_list.append(country_list[idx])
     new_list.insert(0, '')
@@ -116,7 +130,9 @@ async def versus(update: Update, context: ContextTypes.DEFAULT_TYPE):
         table.add_row(add)
 
     await context.bot.send_message(chat_id=update.effective_chat.id, text=f'<pre>{table}</pre>',
-                                   parse_mode=ParseMode.HTML)
+                                   parse_mode=ParseMode.HTML,
+                                   reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
+    return "compare"
 
 
 async def get_response_json(url, params):

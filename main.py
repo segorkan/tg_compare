@@ -13,6 +13,7 @@ from data.compare_list import CompareList
 from check import check, handleCheck, command_list
 from compare import chars, versus
 from graphs import histplot
+import keyboards
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -37,11 +38,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         infoitem.countries = ""
         db_sess.add(infoitem)
         db_sess.commit()
+    markup = ReplyKeyboardMarkup(keyboards.menu, one_time_keyboard=False)
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="<b>Приветствуем вас! Этого бота можно использовать для быстрого получения краткой информации о странах, "
                                         "просмотра интересующих деталей страны и сравнения характеристик стран между собой. "
                                         "/help для получения информации об использовании.</b>",
-                                   parse_mode=ParseMode.HTML)
+                                   parse_mode=ParseMode.HTML, reply_markup=markup)
     return "menu"
 
 
@@ -50,17 +52,20 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                     /help для информации о командах.
                                     /find - перейти к поиску стран. Далее страну можно добавить в список к просмотру информации или список к сравнению.
                                     /info_list - просмотр информации и интересующих деталей о странах в списке.
-                                    /compare_list - перейти к сравнению стран из списка.""")
+                                    /compare_list - перейти к сравнению стран из списка.""",
+                                    reply_markup=ReplyKeyboardMarkup(keyboards.menu, one_time_keyboard=False))
     return "menu"
 
 
 async def back(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Возвращаемся в меню.")
+    await update.message.reply_text("Возвращаемся в меню.",
+                                    reply_markup=ReplyKeyboardMarkup(keyboards.menu, one_time_keyboard=False))
     return "menu"
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Закончил работу. /start для возобновления работы.")
+    await update.message.reply_text("Закончил работу. /start для возобновления работы.",
+                                    reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
