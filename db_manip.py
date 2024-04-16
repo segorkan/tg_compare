@@ -1,9 +1,11 @@
 import logging
+import asyncio
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, ContextTypes, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Bot, KeyboardButton, Update, InputMediaPhoto
 from data import db_session
 from data.info_list import InfoList
 from data.compare_list import CompareList
+from compare import init
 
 
 async def add_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -58,8 +60,15 @@ async def compare_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["clist"] = country_list
     for i in range(len(country_list)):
         send_str += str(i + 1) + '. ' + country_list[i] + '\n'
+    await asyncio.gather(asyncio.create_task(init(country_list)))
     await update.message.reply_text("Вы можете выбрать какие-то страны для детального сравнения.")
     await context.bot.send_message(chat_id=update.effective_chat.id, text=send_str)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="""/delete [id] - удалить страну под номером id из списка
+/chars [id] - численные характеристики 
+/versus [id1] [id2] ... - сравнение всех характеристик переданных стран и нахождение лучшей страны для каждой характеристики
+/histplot [stat] - построение гистограммы в порядке сортировки статистики stat всех стран в compare_list.
+/scatter [stat1] [stat2] - scatter график, ось абсцисс - stat1, ось ординат - stat2
+/deviation [stat] - отклонение от среднего характеристики stat всех стран в compare_list. """)
     return "compare"
 
 
@@ -78,6 +87,9 @@ async def info_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return "info"
     if idx < 0 or idx >= len(country_list):
         await update.message.reply_text("Передан несуществующий индекс.")
+        return "info"
+    if len(context.args) > 1:
+        await update.message.reply_text("Слишком много аргументов.")
         return "info"
 
     db_sess = db_session.create_session()
@@ -98,16 +110,19 @@ async def comp_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
         idx = int(context.args[0]) - 1
     except IndexError:
         await update.message.reply_text("Не передан индекс.")
-        return "info"
+        return "compare"
     except TypeError:
         await update.message.reply_text("Нужен численный аргумент.")
-        return "info"
+        return "compare"
     except ValueError:
         await update.message.reply_text("Нужен численный аргумент.")
-        return "info"
+        return "compare"
     if idx < 0 or idx >= len(country_list):
         await update.message.reply_text("Передан несуществующий индекс.")
-        return "info"
+        return "compare"
+    if len(context.args) > 1:
+        await update.message.reply_text("Слишком много аргументов.")
+        return "compare"
 
     db_sess = db_session.create_session()
     comitem = db_sess.query(CompareList).filter(CompareList.id == update.effective_user.id).first()
@@ -118,4 +133,4 @@ async def comp_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db_sess.commit()
     context.user_data["clist"] = country_list
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Страна была удалена.")
-    return "info"
+    return "compare"

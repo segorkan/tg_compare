@@ -2,6 +2,7 @@ import logging
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, ContextTypes, ConversationHandler, \
     StringRegexHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Bot, KeyboardButton, Update, InputMediaPhoto
+from telegram.constants import ParseMode
 from config import BOT_TOKEN
 from find import pre_find, find
 from db_manip import add_info, add_compare, compare_list, info_list, info_delete, comp_delete
@@ -10,6 +11,8 @@ from data import db_session
 from data.info_list import InfoList
 from data.compare_list import CompareList
 from check import check, handleCheck, command_list
+from compare import chars, versus
+from graphs import histplot
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -35,9 +38,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db_sess.add(infoitem)
         db_sess.commit()
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Приветствуем вас! Этого бота можно использовать для быстрого получения краткой информации о странах, "
+                                   text="<b>Приветствуем вас! Этого бота можно использовать для быстрого получения краткой информации о странах, "
                                         "просмотра интересующих деталей страны и сравнения характеристик стран между собой. "
-                                        "/help для получения информации об использовании.")
+                                        "/help для получения информации об использовании.</b>",
+                                   parse_mode=ParseMode.HTML)
     return "menu"
 
 
@@ -81,7 +85,8 @@ def main():
             "check": [CommandHandler('back', back), MessageHandler(filters.TEXT & ~filters.COMMAND, handleCheck),
                       CommandHandler('chlist', command_list)],
             "compare": [CommandHandler('back', back), CommandHandler('delete', comp_delete),
-                        CommandHandler('compare_list', compare_list)]
+                        CommandHandler('compare_list', compare_list), CommandHandler('chars', chars),
+                        CommandHandler('versus', versus), CommandHandler('histplot', histplot)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )

@@ -25,6 +25,9 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if idx < 0 or idx >= len(country_list):
         await update.message.reply_text("Передан несуществующий индекс.")
         return "info"
+    if len(context.args) > 1:
+        await update.message.reply_text("Слишком много аргументов.")
+        return "info"
     print(idx)
     country = country_list[idx]
     print(country)
