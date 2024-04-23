@@ -12,7 +12,7 @@ from data.info_list import InfoList
 from data.compare_list import CompareList
 from check import check, handleCheck, command_list
 from compare import chars, versus
-from graphs import histplot
+from graphs import histplot, scatter
 import keyboards
 
 logging.basicConfig(
@@ -91,7 +91,8 @@ def main():
                       CommandHandler('chlist', command_list)],
             "compare": [CommandHandler('back', back), CommandHandler('delete', comp_delete),
                         CommandHandler('compare_list', compare_list), CommandHandler('chars', chars),
-                        CommandHandler('versus', versus), CommandHandler('histplot', histplot)]
+                        CommandHandler('versus', versus), CommandHandler('histplot', histplot),
+                        CommandHandler('scatter', scatter)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
