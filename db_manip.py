@@ -71,8 +71,7 @@ async def compare_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
 /chars [id] - численные характеристики 
 /versus [id1] [id2] ... - сравнение всех характеристик переданных стран и нахождение лучшей страны для каждой характеристики
 /histplot [stat] - построение гистограммы в порядке сортировки статистики stat всех стран в compare_list.
-/scatter [stat1] [stat2] - scatter график, ось абсцисс - stat1, ось ординат - stat2
-/deviation [stat] - отклонение от среднего характеристики stat всех стран в compare_list. """,
+/scatter [stat1] [stat2] - scatter график, ось абсцисс - stat1, ось ординат - stat2 """,
                                    reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
     return "compare"
 

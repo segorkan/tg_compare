@@ -60,7 +60,7 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
     res_rus = ts.translate_text(message, from_language="en", to_language="ru")
     res_rus = capitalize_string(res_rus)
     context.user_data["last_country"] = res_eng
-    response = await get_response_json(base_country1 + res_eng, params={})
+    response = await get_response_json(base_country1 + res_eng + "?fullText=true", params={})
     if len(response) > 1:
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Такая страна не найдена. Попробуйте ещё раз.",

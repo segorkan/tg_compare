@@ -99,3 +99,46 @@ async def scatter(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                  caption=f"{stats[0], stats[1]}",
                                  reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
     return "compare"
+
+
+async def deviation(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        stat = context.args[0]
+    except IndexError:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Аргумент не передан.",
+                                       reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
+        return "compare"
+    db_sess = db_session.create_session()
+    query = db_sess.query(SaveInfo).first()
+    stat_list = []
+    if stat not in query.intinfo:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Статистика не найдена.",
+                                       reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
+        return "compare"
+    query = db_sess.query(CompareList).filter(CompareList.id == update.effective_user.id).first()
+    for i in query.countries.split(','):
+        if not i:
+            continue
+        query = db_sess.query(SaveInfo).filter(SaveInfo.country == i).first()
+        l = query.intinfo.split(',')
+        for j in l:
+            if stat == j.split('=')[0]:
+                stat_list.append(float(j.split('=')[1]))
+    cs = db_sess.query(CompareList).filter(CompareList.id == update.effective_user.id).first().countries.split(',')
+    cs = cs[:len(cs) - 1]
+    mid = float(sum(stat_list)) / float(len(stat_list))
+    new_list = []
+    for i in stat_list:
+        new_list.append(i / mid * 100.)
+    fig = plt.figure(figsize=(10, 5))
+    plt.bar(cs, new_list, color="maroon", width=0.4)
+    plt.xlabel("Страны")
+    plt.ylabel(f"Отклонение в процентах хар-ки {stat}")
+    plt.title(f"Гистограмма отклонения {stat}")
+    plt.savefig("./images/histplot2.png")
+
+    await context.bot.send_photo(chat_id=update.effective_chat.id, photo=open("./images/histplot2.png", 'rb'),
+                                 caption=f"{stat}",
+                                 reply_markup=ReplyKeyboardMarkup(keyboards.compare, one_time_keyboard=False))
+    return "compare"
+
