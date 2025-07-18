@@ -1,2 +1,2 @@
-BOT_TOKEN = "6480250882:AAFbwT9jev10kxh29YWKX8Eam_azhFaBh7k"
-API_KEY = "3EKtfu/opmszqx+31wRMBg==w2D39rjwiAmCXM2G"
+BOT_TOKEN = ""
+API_KEY = ""
